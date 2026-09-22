@@ -11,7 +11,13 @@ export async function GET(_req: Request, { params }: Ctx) {
     const { id } = await params;
     const image = await Image.findById(id).lean();
     if (!image) return new NextResponse("Not found", { status: 404 });
-    return new NextResponse(new Uint8Array(image.data as unknown as Buffer), {
+
+    const rawData = image.data as unknown;
+    const imageBuffer = Buffer.isBuffer(rawData)
+      ? rawData
+      : Buffer.from((rawData as { buffer: Uint8Array }).buffer);
+
+    return new NextResponse(new Uint8Array(imageBuffer), {
       headers: {
         "Content-Type": image.contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
